@@ -1,7 +1,8 @@
 import streamlit as st
 import pickle
 import pandas as pd
-
+import numpy as np
+from streamlit.proto.ColorPicker_pb2 import ColorPicker
 teams = ['Sunrisers Hyderabad',
  'Mumbai Indians',
  'Royal Challengers Bangalore',
@@ -19,27 +20,30 @@ cities = ['Hyderabad', 'Bangalore', 'Mumbai', 'Indore', 'Kolkata', 'Delhi',
        'Sharjah', 'Mohali', 'Bengaluru']
 
 pipe = pickle.load(open('pipe.pkl','rb'))
-st.title('IPL Win Predictor')
-
+st.title('IPL Win Probability')
+st.image("prediction.jpg")
 col1, col2 = st.beta_columns(2)
 
 with col1:
     batting_team = st.selectbox('Select the batting team',sorted(teams))
+    
 with col2:
     bowling_team = st.selectbox('Select the bowling team',sorted(teams))
 
 selected_city = st.selectbox('Select host city',sorted(cities))
 
-target = st.number_input('Target')
+target = st.number_input('Target',min_value=0,step=1)
 
 col3,col4,col5 = st.beta_columns(3)
 
 with col3:
-    score = st.number_input('Score')
+    score = st.number_input(label='Score',min_value=0,step=1)
 with col4:
-    overs = st.number_input('Overs completed')
+    overs = st.number_input('Overs completed',min_value=0,max_value=19,step=1)
 with col5:
-    wickets = st.number_input('Wickets out')
+    wickets = st.number_input('Wickets out',min_value=0,max_value=10,step=1)
+
+
 
 if st.button('Predict Probability'):
     runs_left = target - score
@@ -49,9 +53,10 @@ if st.button('Predict Probability'):
     rrr = (runs_left*6)/balls_left
 
     input_df = pd.DataFrame({'batting_team':[batting_team],'bowling_team':[bowling_team],'city':[selected_city],'runs_left':[runs_left],'balls_left':[balls_left],'wickets':[wickets],'total_runs_x':[target],'crr':[crr],'rrr':[rrr]})
-
     result = pipe.predict_proba(input_df)
     loss = result[0][0]
     win = result[0][1]
+    st.write("Current Runrate:-",crr)
+    st.write("Required Runrate:-",rrr)
     st.header(batting_team + "- " + str(round(win*100)) + "%")
     st.header(bowling_team + "- " + str(round(loss*100)) + "%")
